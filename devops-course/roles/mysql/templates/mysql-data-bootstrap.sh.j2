@@ -1,0 +1,19 @@
+#!/bin/bash
+set -e
+
+DATADIR="{{ mysql_datadir }}"
+
+# Ensure datadir and runtime socket directories exist with proper ownership and permissions
+mkdir -p "$DATADIR"
+chown -R mysql:mysql "$DATADIR"
+chmod 750 "$DATADIR"
+
+mkdir -p /var/lib/mysql /var/run/mysqld
+chown -R mysql:mysql /var/lib/mysql /var/run/mysqld
+chmod 755 /var/lib/mysql /var/run/mysqld
+
+# If datadir is empty (such as after mounting a new EBS volume), initialize MySQL
+if [ -z "$(ls -A "$DATADIR" 2>/dev/null)" ]; then
+    echo "MySQL datadir $DATADIR is empty. Initializing..."
+    mysqld --initialize-insecure --user=mysql --datadir="$DATADIR"
+fi

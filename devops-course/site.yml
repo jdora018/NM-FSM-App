@@ -1,0 +1,8 @@
+---
+- name: Install and configure MySQL 8.4 on database servers
+  hosts: dbservers
+  become: true
+  vars_files:
+    - vault.yml
+  roles:
+    - role: mysql
