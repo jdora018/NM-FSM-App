@@ -4,3 +4,21 @@ __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
+
+# Ansible vault password file - NEVER commit this
+.ansible_vault_pass
+**/.ansible_vault_pass
+
+# Temporary files
+*.tmp
+*.bak
+
+# Terraform state and local overrides
+*.tfstate
+*.tfstate.backup
+*.tfvars
+.terraform/
+.terraform.lock.hcl
+
+# SSH private keys
+*.pem

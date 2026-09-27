@@ -55,6 +55,12 @@
     mode: '0644'
   notify: Restart mysqld
 
+- name: Make MySQL read /etc/my.cnf.d (where custom.cnf lives)
+  ansible.builtin.lineinfile:
+    path: /etc/my.cnf
+    line: "!includedir /etc/my.cnf.d"
+    state: present
+
 - name: Ensure MySQL datadir and runtime socket directories exist
   ansible.builtin.file:
     path: "{{ item }}"
@@ -93,24 +99,26 @@
     state: present
     timeout: 60
 
-- name: Set the MySQL root password (first run only)
+- name: Set the MySQL root password
   ansible.builtin.shell: |
     SOCK=/var/lib/mysql/mysql.sock
-    # Case 1: root still has no password (fresh --initialize-insecure)
-    if mysql -u root --socket=$SOCK -e "SELECT 1" >/dev/null 2>&1; then
-      mysql -u root --socket=$SOCK \
-        -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ mysql_root_password }}';"
-      exit 0
+    # Already set to the vault password? Nothing to do.
+    if mysql --no-defaults -u root -p"$ROOT_PW" --socket=$SOCK -e "SELECT 1" >/dev/null 2>&1; then
+      echo "UNCHANGED"; exit 0
     fi
-    # Case 2: the password is already correct - nothing to do
-    if mysql -u root -p'{{ mysql_root_password }}' --socket=$SOCK -e "SELECT 1" >/dev/null 2>&1; then
-      exit 0
+    # Fresh install: root has no password yet, so set it.
+    if mysql --no-defaults -u root --socket=$SOCK -e "SELECT 1" >/dev/null 2>&1; then
+      mysql --no-defaults -u root --socket=$SOCK \
+        -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$ROOT_PW';"
+      echo "SET"; exit 0
     fi
-    echo "Could not authenticate to MySQL as root"
+    echo "root already has a password, and it is not the one in the vault"
     exit 1
-  no_log: true
-  when: datadir_contents.matched == 0
-
+  environment:
+    ROOT_PW: "{{ mysql_root_password }}"
+  register: root_pw_result
+  changed_when: "'SET' in root_pw_result.stdout"
+   
 - name: Configure /root/.my.cnf
   ansible.builtin.template:
     src: root_my_cnf.j2
@@ -135,12 +143,12 @@
   community.mysql.mysql_user:
     name: "{{ mysql_app_user }}"
     host: "%"
-    password: "{{ mysql_app_password }}"
+    login_user: root
+    plugin_auth_string: "{{ mysql_app_password }}"
     login_password: "{{ mysql_root_password }}"
     plugin: caching_sha2_password
     priv: "{{ mysql_db_name }}.*:ALL"
     state: present
-    login_user: root
     login_unix_socket: /var/lib/mysql/mysql.sock
     check_implicit_admin: true
 
