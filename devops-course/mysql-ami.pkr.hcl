@@ -63,7 +63,7 @@ build {
     ansible_env_vars = ["ANSIBLE_HOST_KEY_CHECKING=False"]
     groups           = ["dbservers"]
     extra_arguments = [
-      "--vault-password-file", "/home/ec2-user/NM-FSM-App/devops-course/.vault_pass"
+      "--vault-password-file", "/home/ec2-user/.ansible_vault_pass"
     ]
   }
   post-processor "manifest" {
