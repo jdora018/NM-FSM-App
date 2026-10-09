@@ -12,13 +12,17 @@ __pycache__/
 # Temporary files
 *.tmp
 *.bak
+*.swp
 
-# Terraform state and local overrides
+# Terraform state, plans, and runtime artifacts
 *.tfstate
+*.tfstate.*
 *.tfstate.backup
-*.tfvars
+terraform.tfstate.d/
+*.tfplan
+*.bin
+*.zip
 .terraform/
-.terraform.lock.hcl
 
 # SSH private keys
 *.pem
