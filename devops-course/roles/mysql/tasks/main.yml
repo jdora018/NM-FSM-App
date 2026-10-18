@@ -151,7 +151,7 @@
     state: present
     login_unix_socket: /var/lib/mysql/mysql.sock
     check_implicit_admin: true
-
+    update_password: on_create
 # ----------------------------------------------------------------------
 # 6. Systemd Bootstrap
 # ----------------------------------------------------------------------
